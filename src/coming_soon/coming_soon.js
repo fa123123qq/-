@@ -1,0 +1,58 @@
+(function (angular) {
+    //1.创建1个模块.
+    var app = angular.module('moviecat_coming_soon', ['ngRoute', 'heima']);
+
+    //2.配置路由.
+    app.config(['$routeProvider', function ($routeProvider) {
+        //   /in_theaters/1   多了?就可以删略page
+        $routeProvider.when('/coming_soon/:page?', {
+            templateUrl: "./coming_soon/coming_soon.html",
+            controller: "coming_soonCtrl"
+        });
+    }]);
+    //3.创建控制器
+    app.controller('coming_soonCtrl', [
+        '$scope',
+        'heimaJsonp',
+        '$window',
+        '$routeParams',
+        '$route',
+        function ($scope, heimaJsonp, $window, $routeParams, $route) {
+            $scope.isShow = true;
+            //没有就显示也是就是第一页,-0是转换为数字
+            $scope.pageIndex = ($routeParams.page || 1) - 0;
+            $scope.pageSize = 10;
+
+
+            // 向服务器指定页面的数据
+
+
+            heimaJsonp.hmJsonp({
+                url: "http://api.douban.com/v2/movie/coming_soon",
+                params: {
+                    count: $scope.pageSize,
+                    start: ($scope.pageIndex - 1) * $scope.pageSize
+                },
+                callback: function (data) {
+                    $scope.movies = data;
+                    //总页数
+                    $scope.pageCount = $window.Math.ceil((data.total / $scope.pageSize));
+                    //隐藏css动画
+                    $scope.isShow = false;
+                    $scope.$apply(); //告诉视图 数据模型发生了变化 赶紧刷新你的视图.
+                }
+
+            });
+            $scope.getPage = function (pageIndex) {
+                if (pageIndex < 1 || pageIndex > $scope.pageCount) return;
+                // 要page变成2
+                //把url地址栏的page参数改成2
+                $route.updateParams({
+                    page: pageIndex
+                })
+
+
+            }
+        }
+    ])
+})(angular);
